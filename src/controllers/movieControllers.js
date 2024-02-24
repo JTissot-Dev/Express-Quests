@@ -3,8 +3,30 @@
 const database = require("../../database");
 
 const getMovies = (req, res) => {
+  const reqQueryKeys = Object.keys(req.query);
+  const reqQueryValues = Object.values(req.query);
+  
+  const sqlWhereParams = reqQueryKeys.map(key => {
+    if (key.includes('max')) {
+      return `${key.replace('max_', '')} <= ?`
+    } else if (key.includes('min')) {
+      return `${key.replace('min_', '')} >= ?`
+    } else {
+      return `${key} = ?`
+    }
+  });
+
+  let sqlQuery = 'select* from movies';
+  if (sqlWhereParams.length === 1) {
+    sqlQuery = `${sqlQuery} where ${sqlWhereParams[0]}`;
+  } else if (sqlWhereParams.length > 1) {
+    sqlQuery = `${sqlQuery} where ${sqlWhereParams.join(" and ")}`;
+  }
+
+  sqlArray = reqQueryValues;
+
   database
-  .query("select* from movies")
+  .query(sqlQuery, sqlArray)
   .then(([movies]) => {
     res.json(movies);
   })
